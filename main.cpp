@@ -15,7 +15,7 @@ int main(int argc , char *argv[])
     World w;
     w.build();
     w.render_scene();
-    w.save_image();
+
     
     
     
@@ -30,6 +30,7 @@ int main(int argc , char *argv[])
     
     myView.show();
     myView.update();
+    w.save_image();
 
     
 

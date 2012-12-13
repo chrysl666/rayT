@@ -2,6 +2,7 @@
 
 //#include "wxraytracer.h"
 
+#include <iostream>
 #include "World.h"
 #include "Constants.h"
 
@@ -62,8 +63,7 @@ World::World(void)
 {
 
     // new Lines for QT
-    image = new QImage(vp.vres , vp.hres , QImage::Format_RGB32);
-    image->fill(Qt::green);
+    image = NULL;
 
 }
 
@@ -108,14 +108,29 @@ World::render_scene(void) const {
 	int 		vres 	= vp.vres;
 	float		s		= vp.s;
 	float		zw		= 100.0;				// hardwired in
+        int           n = (int)sqrt( (float)vp.num_samples);
+        Point2D pp;
+
+
 
 	ray.d = Vector3D(0, 0, -1);
 	
 	for (int r = 0; r < vres; r++)			// up
                 for (int c = 0; c <= hres-1; c++) {	// across
-			ray.o = Point3D(s * (c - hres / 2.0 + 0.5), s * (r - vres / 2.0 + 0.5), zw);
-			pixel_color = tracer_ptr->trace_ray(ray);
-			display_pixel(r, c, pixel_color);
+                        pixel_color = black;
+
+                        for(int p = 0 ; p < n; p++)
+                        {
+                            for(int q = 0 ; q < n; q++)
+                            {
+                                pp.x = vp.s * (c - 0.5 * vp.hres + (q + 0.5) /n);
+                                pp.y = vp.s * (r -0.5 *  vp.vres + ( p + 0.5)/n);
+
+                                ray.o = Point3D(pp.x , pp.y , zw);
+                                pixel_color = tracer_ptr->trace_ray(ray);
+                                display_pixel(r, c, pixel_color);
+                            }
+                        }
 		}	
 }  
 
@@ -256,7 +271,7 @@ World::delete_lights(void) {
 // new Functions for Qt
 void World::save_image()
 {
-    image->save("/Users/chrysl666/Desktop/DEV/rayT/teste.png");
+    image->save("/Users/chrysl666/Desktop/CPP_Testes/rayDevrayT/teste.png");
     std::cout<<"done";
 }
 
