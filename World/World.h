@@ -20,16 +20,16 @@
 #include "GeometricObject.h"
 #include "Sphere.h"
 #include "Ray.h"
-#include "SingleSphere.h"
 
 #include "Camera.h"
 #include "Light.h"
 #include "Ambient.h"
 #include <QImage>
-#include <QColor>
+
 
 using namespace std;
 
+	//class RenderThread; 	//part of skeleton - wxRaytracer.h
 
 
 class World {	
@@ -40,32 +40,21 @@ class World {
 		Tracer*						tracer_ptr;
 		Light*   					ambient_ptr;
 		Camera*						camera_ptr;		
-		Sphere 						sphere;		// for Chapter 3 only
+		//Sphere 						sphere;		// for Chapter 3 only
 		vector<GeometricObject*>	objects;		
 		vector<Light*> 				lights;
-    
-    //Qt
-        QImage                      *image;
-
 		
-        //connection to skeleton - wxRaytracer.h
+		//RenderThread* 				paintArea; 	//connection to skeleton - wxRaytracer.h
+
+		QImage                      *image;
 			
 
 	public:
 	
-                World(void);
+		World(void);												
 		
 		~World();
-
-        //Qt
-        void 
-        save_image();
-        
-        QImage 
-        getImage();
-		
-    
-    
+								
 		void 
 		add_object(GeometricObject* object_ptr);
 		
@@ -95,6 +84,19 @@ class World {
 
 		ShadeRec
 		hit_objects(const Ray& ray);
+		
+		// add chapter 3 multiples objects 
+		ShadeRec
+		hit_bare_bones_objects(const Ray& ray) ;
+	
+		
+	
+        //Qt
+	void 
+	save_image();
+	
+	QImage 
+	getImage();
 		
 						
 	private:

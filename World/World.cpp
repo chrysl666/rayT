@@ -2,7 +2,6 @@
 
 //#include "wxraytracer.h"
 
-#include <iostream>
 #include "World.h"
 #include "Constants.h"
 
@@ -13,7 +12,6 @@
 
 // tracers
 
-#include "SingleSphere.h"
 #include "MultipleObjects.h"
 #include "RayCast.h"
 
@@ -41,11 +39,9 @@
 
 #include "BuildShadedObjects.cpp"
 
-//Libs for Qt and log
+//Qt
+#include <QRgb>
 #include <iostream>
-#include <QtGui>
-#include <QImage> 
-
 
 
 // -------------------------------------------------------------------- default constructor
@@ -61,10 +57,7 @@ World::World(void)
 		ambient_ptr(new Ambient),
 		camera_ptr(NULL)
 {
-
-    // new Lines for QT
-    image = NULL;
-
+	image = NULL;
 }
 
 
@@ -102,36 +95,59 @@ World::~World(void) {
 void 												
 World::render_scene(void) const {
 
+	/*
 	RGBColor	pixel_color;	 	
 	Ray			ray;					
 	int 		hres 	= vp.hres;
 	int 		vres 	= vp.vres;
 	float		s		= vp.s;
 	float		zw		= 100.0;				// hardwired in
-        int           n = (int)sqrt( (float)vp.num_samples);
-        Point2D pp;
-
-
 
 	ray.d = Vector3D(0, 0, -1);
 	
 	for (int r = 0; r < vres; r++)			// up
-                for (int c = 0; c <= hres-1; c++) {	// across
-                        pixel_color = black;
-
-                        for(int p = 0 ; p < n; p++)
-                        {
-                            for(int q = 0 ; q < n; q++)
-                            {
-                                pp.x = vp.s * (c - 0.5 * vp.hres + (q + 0.5) /n);
-                                pp.y = vp.s * (r -0.5 *  vp.vres + ( p + 0.5)/n);
-
-                                ray.o = Point3D(pp.x , pp.y , zw);
-                                pixel_color = tracer_ptr->trace_ray(ray);
-                                display_pixel(r, c, pixel_color);
-                            }
-                        }
+		for (int c = 0; c <= hres-1; c++) {	// across 					
+			ray.o = Point3D(s * (c - hres / 2.0 + 0.5), s * (r - vres / 2.0 + 0.5), zw);
+			pixel_color = tracer_ptr->trace_ray(ray);
+			display_pixel(r, c, pixel_color);
 		}	
+	 
+	 
+	 */
+	
+	
+	RGBColor	pixel_color;	 	
+	Ray			ray;					
+	int 		hres 	= vp.hres;
+	int 		vres 	= vp.vres;
+	float		s		= vp.s;
+	float		zw		= 100.0;				// hardwired in
+	int           n = (int)sqrt( (float)vp.num_samples);
+	Point2D pp;
+	
+	
+	
+	ray.d = Vector3D(0, 0, -1);
+	
+	for (int r = 0; r < vres; r++)			// up
+		for (int c = 0; c <= hres-1; c++) {	// across
+			pixel_color = black;
+			
+			for(int p = 0 ; p < n; p++)
+			{
+				for(int q = 0 ; q < n; q++)
+				{
+					pp.x = vp.s * (c - 0.5 * vp.hres + (q + 0.5) /n);
+					pp.y = vp.s * (r -0.5 *  vp.vres + ( p + 0.5)/n);
+					
+					ray.o = Point3D(pp.x , pp.y , zw);
+					pixel_color = tracer_ptr->trace_ray(ray);
+					display_pixel(r, c, pixel_color);
+				}
+			}
+		}	
+
+	
 }  
 
 
@@ -190,23 +206,48 @@ World::display_pixel(const int row, const int column, const RGBColor& raw_color)
    int x = column;
    int y = vp.vres - row - 1;
 
-    //Old function for WxWidget
-   /*paintArea->setPixel(x, y, (int)(mapped_color.r * 255),
-                             (int)(mapped_color.g * 255),
-                             (int)(mapped_color.b * 255));*/
-    
-    
-    // new Functions for Qt
-    QRgb value;
-    value = qRgb(mapped_color.r * 255,mapped_color.g * 255 ,mapped_color.b * 255);
-    image->setPixel(x,y,value);
+   //paintArea->setPixel(x, y, (int)(mapped_color.r * 255),
+   //                          (int)(mapped_color.g * 255),
+   //                          (int)(mapped_color.b * 255));
+
+   QRgb value;
+   value = qRgb(mapped_color.r * 255,mapped_color.g * 255 ,mapped_color.b * 255);
+   image->setPixel(x,y,value);
 }
 
 // ----------------------------------------------------------------------------- hit_objects
 
 ShadeRec									
 World::hit_objects(const Ray& ray) {
-
+	
+	ShadeRec	sr(*this); 
+	double		t;
+	Normal normal;
+	Point3D local_hit_point;
+	float		tmin 			= kHugeValue;
+	int 		num_objects 	= objects.size();
+	
+	for (int j = 0; j < num_objects; j++)
+		if (objects[j]->hit(ray, t, sr) && (t < tmin)) {
+			sr.hit_an_object	= true;
+			std::cout<<"numObjcts:"<<num_objects<<"hit:"<<j<<std::endl;
+			tmin 				= t;
+			sr.color			= objects[j]->get_color();
+			sr.hit_point 		= ray.o + t * ray.d;
+			normal 				= sr.normal;
+			local_hit_point	 	= sr.local_hit_point;
+		}
+	
+	if(sr.hit_an_object) {
+		std::cout<<"hit_and_object"<<std::endl;
+		sr.t = tmin;
+		sr.normal = normal;
+		sr.local_hit_point = local_hit_point;
+	}
+	
+	return(sr); 
+	
+	/*
 	ShadeRec	sr(*this); 
 	double		t;
 	Normal normal;
@@ -230,7 +271,8 @@ World::hit_objects(const Ray& ray) {
 		sr.local_hit_point = local_hit_point;
 	}
 		
-	return(sr);   
+	return(sr);  
+	 */
 }
 
 
@@ -267,11 +309,10 @@ World::delete_lights(void) {
 	lights.erase (lights.begin(), lights.end());
 }
 
-
-// new Functions for Qt
+	// new Functions for Qt
 void World::save_image()
 {
-    image->save("/Users/chrysl666/Desktop/CPP_Testes/rayDevrayT/teste.png");
+    image->save("/Users/chrysl666/Desktop/teste.png");
     std::cout<<"done";
 }
 
@@ -280,3 +321,30 @@ QImage World::getImage()
     return (*image);
 }
 
+
+ShadeRec
+World::hit_bare_bones_objects(const Ray& ray) 
+{
+		//World wr = *this;
+	ShadeRec	sr(*this); 
+	double	t;
+	double tmin			= kHugeValue;
+	int	   num_objects	=	objects.size();
+	std::cout <<"hitbarebones:"<<num_objects<<std::endl;
+	for (int j = 0 ; j < num_objects ; j++)
+	{
+		if( objects[j]->hit(ray,t ,sr) && (t<tmin) )
+		   {
+			   sr.hit_an_object = true;
+			   tmin				= t ;
+			   std::cout <<"hit2"<<std::endl;
+			   sr.color			= objects[j]->get_color();
+		   }
+		if(sr.hit_an_object) {
+			sr.t = tmin;
+				//sr.normal = normal;
+				//sr.local_hit_point = local_hit_point;
+		}
+		   return(sr);
+	}
+}

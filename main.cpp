@@ -12,7 +12,7 @@ int main(int argc , char *argv[])
 {      
     
     
-    World w;
+    World w ;
     w.build();
     w.render_scene();
 
